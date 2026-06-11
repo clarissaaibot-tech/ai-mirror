@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 
@@ -7,12 +9,13 @@ export default function Home() {
   const [mirrorQuestion, setMirrorQuestion] = useState('')
   const [mirrorNote, setMirrorNote] = useState('')
   const [loading, setLoading] = useState(false)
-  const [ripples, setRipples] = useState([])
   const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 })
   const [mounted, setMounted] = useState(false)
   const canvasRef = useRef(null)
   const rippleCanvasRef = useRef(null)
   const cursorRef = useRef({ x: -100, y: -100, tx: -100, ty: -100 })
+  const ripplesRef = useRef([])
+  const ripplesVersionRef = useRef(0)
 
   useEffect(() => {
     setMounted(true)
@@ -83,12 +86,11 @@ export default function Home() {
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      setRipples(prev => {
-        const updated = prev.map(r => ({ ...r, r: r.r + 1.2, opacity: r.opacity * 0.988 }))
-        return updated.filter(r => r.opacity > 0.01)
-      })
+      ripplesRef.current = ripplesRef.current
+        .map(r => ({ ...r, r: r.r + 1.2, opacity: r.opacity * 0.988 }))
+        .filter(r => r.opacity > 0.01)
 
-      ripples.forEach(ripple => {
+      ripplesRef.current.forEach(ripple => {
         ctx.beginPath()
         ctx.arc(ripple.x, ripple.y, ripple.r, 0, Math.PI * 2)
         ctx.strokeStyle = `rgba(158, 224, 240, ${ripple.opacity * 0.6})`
@@ -113,7 +115,7 @@ export default function Home() {
       window.removeEventListener('resize', resize)
       cancelAnimationFrame(animationId)
     }
-  }, [mounted, ripples.length])
+  }, [mounted])
 
   // Smooth cursor
   useEffect(() => {
@@ -138,7 +140,7 @@ export default function Home() {
       cursorRef.current.tx = e.clientX
       cursorRef.current.ty = e.clientY
       if (Math.random() < 0.025) {
-        setRipples(prev => [...prev, { x: e.clientX, y: e.clientY, r: 0, opacity: 0.7 }])
+        ripplesRef.current = [...ripplesRef.current, { x: e.clientX, y: e.clientY, r: 0, opacity: 0.7 }]
       }
     }
 
@@ -146,12 +148,12 @@ export default function Home() {
       for (let i = 0; i < 3; i++) {
         const angle = (i / 3) * Math.PI * 2
         const dist = 25 + i * 20
-        setRipples(prev => [...prev, {
+        ripplesRef.current = [...ripplesRef.current, {
           x: e.clientX + Math.cos(angle) * dist,
           y: e.clientY + Math.sin(angle) * dist,
           r: 0,
           opacity: 0.7
-        }])
+        }]
       }
     }
 
