@@ -2,18 +2,16 @@ import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 
 export default function Home() {
-  const [step, setStep] = useState('landing') // landing | question | mirror
+  const [step, setStep] = useState('landing')
   const [input, setInput] = useState('')
   const [mirrorQuestion, setMirrorQuestion] = useState('')
   const [mirrorNote, setMirrorNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [ripples, setRipples] = useState([])
-  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
-  const [smoothPos, setSmoothPos] = useState({ x: 0, y: 0 })
+  const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 })
   const canvasRef = useRef(null)
   const rippleCanvasRef = useRef(null)
-  const animationRef = useRef()
-  const cursorRef = useRef({ x: 0, y: 0, tx: 0, ty: 0 })
+  const cursorRef = useRef({ x: -100, y: -100, tx: -100, ty: -100 })
 
   // Water background animation
   useEffect(() => {
@@ -33,7 +31,6 @@ export default function Home() {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       time += 0.008
 
-      // Draw water waves
       for (let i = 0; i < 5; i++) {
         ctx.beginPath()
         ctx.moveTo(0, canvas.height * 0.4 + Math.sin(time + i * 0.5) * 15)
@@ -53,7 +50,7 @@ export default function Home() {
     return () => window.removeEventListener('resize', resize)
   }, [])
 
-  // Ripple canvas
+  // Ripple animation
   useEffect(() => {
     const canvas = rippleCanvasRef.current
     if (!canvas) return
@@ -95,33 +92,43 @@ export default function Home() {
     const move = () => {
       cursorRef.current.x += (cursorRef.current.tx - cursorRef.current.x) * 0.25
       cursorRef.current.y += (cursorRef.current.ty - cursorRef.current.y) * 0.25
-      setSmoothPos({ x: cursorRef.current.x, y: cursorRef.current.y })
+      setCursorPos({ x: cursorRef.current.x, y: cursorRef.current.y })
       raf = requestAnimationFrame(move)
     }
     raf = requestAnimationFrame(move)
     return () => cancelAnimationFrame(raf)
   }, [])
 
-  const handleMouseMove = (e) => {
-    cursorRef.current.tx = e.clientX
-    cursorRef.current.ty = e.clientY
-    if (Math.random() < 0.025) {
-      setRipples(prev => [...prev, { x: e.clientX, y: e.clientY, r: 0, opacity: 0.7 }])
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      cursorRef.current.tx = e.clientX
+      cursorRef.current.ty = e.clientY
+      if (Math.random() < 0.025) {
+        setRipples(prev => [...prev, { x: e.clientX, y: e.clientY, r: 0, opacity: 0.7 }])
+      }
     }
-  }
 
-  const handleClick = (e) => {
-    for (let i = 0; i < 3; i++) {
-      const angle = (i / 3) * Math.PI * 2
-      const dist = 25 + i * 20
-      setRipples(prev => [...prev, {
-        x: e.clientX + Math.cos(angle) * dist,
-        y: e.clientY + Math.sin(angle) * dist,
-        r: 0,
-        opacity: 0.7
-      }])
+    const handleClick = (e) => {
+      for (let i = 0; i < 3; i++) {
+        const angle = (i / 3) * Math.PI * 2
+        const dist = 25 + i * 20
+        setRipples(prev => [...prev, {
+          x: e.clientX + Math.cos(angle) * dist,
+          y: e.clientY + Math.sin(angle) * dist,
+          r: 0,
+          opacity: 0.7
+        }])
+      }
     }
-  }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('click', handleClick)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('click', handleClick)
+    }
+  }, [])
 
   const handleSubmit = async () => {
     if (!input.trim() || loading) return
@@ -158,24 +165,32 @@ export default function Home() {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+        <style>{`
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          html, body {
+            background: #0a0a0a;
+            color: #9ee0e0;
+            font-family: 'Inter', -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+            cursor: none;
+            user-select: none;
+            -webkit-user-select: none;
+          }
+          ::selection { background: transparent; }
+          textarea { user-select: text; -webkit-user-select: text; cursor: text !important; }
+          button { cursor: none !important; }
+          a { cursor: none !important; }
+          @keyframes cursorPulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.4); opacity: 0.3; }
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
       </Head>
-
-      <style jsx global>{`
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-          background: #0a0a0a;
-          color: #9ee0e0;
-          font-family: 'Inter', -apple-system, sans-serif;
-          min-height: 100vh;
-          overflow: hidden;
-          cursor: none;
-          user-select: none;
-          -webkit-user-select: none;
-        }
-        ::selection { background: transparent; }
-        textarea { user-select: text; -webkit-user-select: text; }
-        a { cursor: none; }
-      `}</style>
 
       {/* Water background canvas */}
       <canvas
@@ -187,8 +202,6 @@ export default function Home() {
       <canvas
         ref={rippleCanvasRef}
         style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 2, pointerEvents: 'none' }}
-        onMouseMove={handleMouseMove}
-        onClick={handleClick}
       />
 
       {/* Dark overlay */}
@@ -201,8 +214,8 @@ export default function Home() {
       {/* Custom cursor */}
       <div style={{
         position: 'fixed',
-        left: smoothPos.x,
-        top: smoothPos.y,
+        left: cursorPos.x,
+        top: cursorPos.y,
         width: 24,
         height: 24,
         transform: 'translate(-50%, -50%)',
@@ -224,13 +237,6 @@ export default function Home() {
         }} />
       </div>
 
-      <style jsx>{`
-        @keyframes cursorPulse {
-          0%, 100% { transform: scale(1); opacity: 0.6; }
-          50% { transform: scale(1.4); opacity: 0.3; }
-        }
-      `}</style>
-
       {/* Top bar */}
       <div style={{
         position: 'relative', zIndex: 10,
@@ -249,8 +255,6 @@ export default function Home() {
             opacity: 1,
             transition: 'opacity 0.3s',
           }}
-          onMouseEnter={e => e.target.style.opacity = '0.65'}
-          onMouseLeave={e => e.target.style.opacity = '1'}
         >
           dive into the why
         </a>
@@ -265,7 +269,6 @@ export default function Home() {
         textAlign: 'center',
       }}>
 
-        {/* Landing */}
         {step === 'landing' && (
           <div style={{ animation: 'fadeIn 0.8s ease forwards' }}>
             <h1 style={{
@@ -280,7 +283,7 @@ export default function Home() {
               lineHeight: 1.9, maxWidth: 520, marginBottom: 16,
             }}>
               AI answers only reflect <strong style={{ color: 'rgba(158, 224, 224, 0.8)', fontWeight: 500 }}>where you are now</strong>.<br />
-              It doesn't give you the real answer.<br />
+              It doesn&apos;t give you the real answer.<br />
               The real answer comes from <strong style={{ color: 'rgba(158, 224, 224, 0.8)', fontWeight: 500 }}>within you</strong>.
             </p>
             <p style={{
@@ -304,21 +307,12 @@ export default function Home() {
                 cursor: 'none',
                 transition: 'all 0.4s',
               }}
-              onMouseEnter={e => {
-                e.target.style.borderColor = 'rgba(158, 224, 224, 0.6)'
-                e.target.style.boxShadow = '0 0 50px rgba(158, 224, 224, 0.15)'
-              }}
-              onMouseLeave={e => {
-                e.target.style.borderColor = 'rgba(158, 224, 224, 0.35)'
-                e.target.style.boxShadow = 'none'
-              }}
             >
               Enter the mirror
             </button>
           </div>
         )}
 
-        {/* Question */}
         {step === 'question' && (
           <div style={{ animation: 'fadeIn 0.8s ease forwards', width: '100%', maxWidth: 560 }}>
             <h2 style={{
@@ -332,7 +326,7 @@ export default function Home() {
               fontSize: 16, color: 'rgba(158, 224, 224, 0.35)',
               marginBottom: 36,
             }}>
-              Tell me what's on your mind. I'll reflect it back.
+              Tell me what&apos;s on your mind. I&apos;ll reflect it back.
             </p>
             <div style={{
               border: '1px solid rgba(158, 224, 224, 0.2)',
@@ -349,7 +343,7 @@ export default function Home() {
                   color: '#9ee0e0', fontSize: 17,
                   fontFamily: "'Cormorant Garamond', serif",
                   resize: 'none', outline: 'none',
-                  minHeight: 200, lineHeight: 1.7, cursor: 'none',
+                  minHeight: 200, lineHeight: 1.7,
                 }}
               />
             </div>
@@ -369,23 +363,12 @@ export default function Home() {
                 transition: 'all 0.3s',
                 opacity: loading ? 0.6 : 1,
               }}
-              onMouseEnter={e => {
-                if (!loading) {
-                  e.target.style.background = 'rgba(158, 224, 224, 0.1)'
-                  e.target.style.borderColor = 'rgba(158, 224, 224, 0.5)'
-                }
-              }}
-              onMouseLeave={e => {
-                e.target.style.background = 'transparent'
-                e.target.style.borderColor = 'rgba(158, 224, 224, 0.3)'
-              }}
             >
               {loading ? 'Reflecting...' : 'Go deeper'}
             </button>
           </div>
         )}
 
-        {/* Mirror response */}
         {step === 'mirror' && (
           <div style={{ animation: 'fadeIn 0.8s ease forwards', width: '100%', maxWidth: 600 }}>
             <p style={{
@@ -398,9 +381,9 @@ export default function Home() {
               fontSize: 26, fontWeight: 400, lineHeight: 1.6,
               color: '#9ee0e0', marginBottom: 36,
               fontFamily: "'Cormorant Garamond', serif",
-            }}>
-              {mirrorQuestion}
-            </p>
+            }}
+              dangerouslySetInnerHTML={{ __html: mirrorQuestion }}
+            />
             <p style={{
               fontSize: 15, color: 'rgba(158, 224, 224, 0.35)',
               padding: '24px 28px',
@@ -424,27 +407,12 @@ export default function Home() {
                 cursor: 'none',
                 transition: 'all 0.3s',
               }}
-              onMouseEnter={e => {
-                e.target.style.borderColor = 'rgba(158, 224, 224, 0.3)'
-                e.target.style.color = 'rgba(158, 224, 224, 0.6)'
-              }}
-              onMouseLeave={e => {
-                e.target.style.borderColor = 'rgba(158, 224, 224, 0.15)'
-                e.target.style.color = 'rgba(158, 224, 224, 0.35)'
-              }}
             >
               Look again
             </button>
           </div>
         )}
       </main>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </>
   )
 }
