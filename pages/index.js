@@ -145,8 +145,9 @@ export default function Home() {
     }
 
     const handleClick = (e) => {
-      for (let i = 0; i < 3; i++) {
-        const angle = (i / 3) * Math.PI * 2
+      const count = Math.floor(Math.random() * 3) + 1 // 1, 2, or 3
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2
         const dist = 25 + i * 20
         ripplesRef.current = [...ripplesRef.current, {
           x: e.clientX + Math.cos(angle) * dist,
