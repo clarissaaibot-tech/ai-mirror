@@ -229,19 +229,26 @@ export default function Home() {
         `}</style>
       </Head>
 
-      {/* Water background canvas */}
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          zIndex: 0,
-          display: 'block'
-        }}
-      />
+      {/* Water background image */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 0,
+        backgroundImage: 'url(/water-bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        animation: 'waterFlow 25s ease-in-out infinite',
+      }} />
+
+      <style>{`
+        @keyframes waterFlow {
+          0%, 100% { transform: scale(1.05) translateY(0); }
+          50% { transform: scale(1.08) translateY(-2%); }
+        }
+      `}</style>
 
       {/* Ripple canvas */}
       <canvas
@@ -264,7 +271,7 @@ export default function Home() {
         left: 0,
         width: '100vw',
         height: '100vh',
-        background: 'radial-gradient(ellipse at center, rgba(10,10,10,0.35) 0%, rgba(10,10,10,0.75) 100%)',
+        background: 'radial-gradient(ellipse at center, rgba(10,10,10,0.15) 0%, rgba(10,10,10,0.55) 100%)',
         zIndex: 1,
         pointerEvents: 'none'
       }} />
