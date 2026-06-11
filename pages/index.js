@@ -272,7 +272,7 @@ export default function Home() {
         left: 0,
         width: '100vw',
         height: '100vh',
-        background: 'radial-gradient(ellipse at center, rgba(10,10,10,0.15) 0%, rgba(10,10,10,0.55) 100%)',
+        background: 'radial-gradient(ellipse at center, rgba(10,10,10,0.4) 0%, rgba(10,10,10,0.85) 100%)',
         zIndex: 1,
         pointerEvents: 'none'
       }} />
