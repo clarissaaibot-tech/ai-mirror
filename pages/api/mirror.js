@@ -41,40 +41,38 @@ export default async function handler(req, res) {
   }
 
   const useCN = isChinese(input) || (history.length > 0 && history.some(h => isChinese(h.input)))
-  
-  // Build the conversation for context
+
+  // Build context from history
   let context = ''
   if (history && history.length > 0) {
-    context = '\n\nPrevious exchanges:\n'
-    history.forEach((h, i) => {
-      context += `\nRound ${i + 1}: User said — "${h.input}"\nMirror asked — "${h.question}"\n`
-    })
+    context = history.map((h, i) => `用户${i+1}说: "${h.input}" | 镜子问: "${h.question}"`).join(' | ')
   }
 
-  // Simple prompt that's more likely to complete within token limit
-  const prompt = useCN
-    ? `你是一面镜子。你反映用户说的话，然后问一个更深的问题。
-
-用户的输入: ${input}${context}
-
-请按以下JSON格式回答:
-{"question": "你的问题", "note": "镜子注意到什么"}`
-    : `You are a mirror. Reflect what the user said, then ask one deeper question.
-
-User's input: ${input}${context}
-
-Respond in JSON format:
-{"question": "Your question", "note": "What the mirror noticed"}`
+  // Simple, direct prompt — avoid reasoning mode
+  let prompt
+  if (round === 1) {
+    prompt = useCN
+      ? `镜子反映用户的话，然后问一个更深入的问题。直接输出JSON，不要解释。\n用户说: "${input}"\n输出: {"question":"...","note":"..."}`
+      : `Mirror reflects user's words, then asks one deeper question. Output JSON only, no explanation.\nUser: "${input}"\nOutput: {"question":"...","note":"..."}`
+  } else if (round === 2) {
+    prompt = useCN
+      ? `镜子继续深入。上下文: ${context} | 用户最新回应: "${input}"\n直接输出JSON: {"question":"...","note":"..."}`
+      : `Mirror goes deeper. Context: ${context} | Latest user response: "${input}"\nOutput JSON only: {"question":"...","note":"..."}`
+  } else {
+    prompt = useCN
+      ? `镜子做最后反映。上下文: ${context} | 用户最后说: "${input}"\n直接输出JSON: {"question":"...","note":"..."}`
+      : `Mirror final reflection. Context: ${context} | Final user words: "${input}"\nOutput JSON only: {"question":"...","note":"..."}`
+  }
 
   const KEY = process.env.MINIMAX_API_KEY
   if (!KEY) {
     return res.status(500).json({ error: 'API key not configured' })
   }
 
-  try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 15000)
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 12000)
 
+  try {
     const response = await fetch('https://api.minimax.io/anthropic/v1/messages', {
       method: 'POST',
       headers: {
@@ -84,8 +82,8 @@ Respond in JSON format:
       body: JSON.stringify({
         model: 'MiniMax-M2.7',
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 800,
-        temperature: 0.8
+        max_tokens: 400,
+        temperature: 0.7
       }),
       signal: controller.signal
     })
@@ -95,29 +93,32 @@ Respond in JSON format:
     if (!response.ok) {
       const errorText = await response.text()
       console.error('MiniMax API error:', response.status, errorText)
-      return res.status(500).json({ error: 'AI service error', status: response.status, details: errorText })
+      throw new Error('API error: ' + response.status)
     }
 
     const data = await response.json()
 
-    // Find text block
+    // Find text block (skip thinking blocks)
     const textBlock = data.content?.find(c => c.type === 'text')
     const reply = textBlock?.text?.trim() || ''
 
     if (!reply) {
-      console.error('No text block found. Content:', JSON.stringify(data.content?.map(c => ({type: c.type, len: c.text?.length}))))
       throw new Error('No text block in response')
     }
 
     // Extract JSON
     const jsonMatch = reply.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
-      console.error('No JSON found in reply:', reply.substring(0, 200))
-      throw new Error('No JSON in response')
+      console.error('No JSON in reply:', reply.substring(0, 300))
+      throw new Error('No JSON found')
     }
 
     const parsed = JSON.parse(jsonMatch[0])
     
+    if (!parsed.question) {
+      throw new Error('Missing question field')
+    }
+
     parsed.nextRound = round < 3 ? round + 1 : null
     parsed.isComplete = round === 3
 
