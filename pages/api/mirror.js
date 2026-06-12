@@ -321,8 +321,8 @@ export default async function handler(req, res) {
   const userMessage = buildUserMessage(input, round, history)
 
   try {
-    // Use MiniMax-M2.7 model via OpenAI-compatible endpoint
-    const response = await fetch('https://api.minimax.chat/v1/chat/completions', {
+    // Use MiniMax-M2.7 via Anthropic-compatible endpoint
+    const response = await fetch('https://api.minimax.io/anthropic/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -331,8 +331,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'MiniMax-M2.7',
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
+          { role: 'user', content: systemPrompt + '\n\nUser: ' + userMessage }
         ],
         max_tokens: 512,
         temperature: 0.8
@@ -348,18 +347,20 @@ export default async function handler(req, res) {
     const data = await response.json()
     console.log('MiniMax response:', JSON.stringify(data))
 
-    // Parse response — OpenAI-compatible format
+    // Parse response — Anthropic-compatible format
     let reply = ''
     
-    if (data.choices?.[0]?.message?.content) {
-      reply = data.choices[0].message.content.trim()
-    } else if (data.choices?.[0]?.delta?.content) {
-      reply = data.choices[0].delta.content.trim()
-    } else if (data.choices?.[0]?.text) {
-      reply = data.choices[0].text.trim()
-    } else if (data.base_resp?.error_msg) {
-      throw new Error(data.base_resp.error_msg)
-    } else {
+    if (data.content?.[0]?.text) {
+      reply = data.content[0].text.trim()
+    } else if (data.content?.[0]?.type === 'text') {
+      reply = data.content[0].text.trim()
+    } else if (data.content) {
+      // Find first text block
+      const textBlock = data.content.find(c => c.type === 'text')
+      reply = textBlock?.text?.trim() || ''
+    }
+    
+    if (!reply) {
       console.error('Could not parse MiniMax response:', JSON.stringify(data))
       throw new Error('Could not parse response')
     }
