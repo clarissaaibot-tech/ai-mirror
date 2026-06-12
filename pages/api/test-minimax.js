@@ -15,10 +15,10 @@ export default async function handler(req, res) {
         model: 'MiniMax-M2.7',
         messages: [{ 
           role: 'user', 
-          content: '你是一面镜子。用户说「我很害怕」。直接返回JSON，不要解释：{"question":"...","note":"..."}' 
+          content: '直接输出: {"q":"你害怕什么","n":"你在保护什么"}' 
         }],
-        max_tokens: 300,
-        temperature: 0.7
+        max_tokens: 200,
+        temperature: 0.3
       }),
       signal: controller.signal
     })
@@ -29,14 +29,11 @@ export default async function handler(req, res) {
     const textBlock = data.content?.find(c => c.type === 'text')
     const reply = textBlock?.text?.trim() || ''
     
-    // Try to extract JSON
-    const m = reply.match(/\{[\s\S]+\}/)
-    if (m) {
-      const parsed = JSON.parse(m[0])
-      res.status(200).json({ ok: true, question: parsed.question, note: parsed.note })
-    } else {
-      res.status(200).json({ ok: true, reply: reply.substring(0, 300) })
-    }
+    res.status(200).json({ 
+      ok: true, 
+      reply: reply,
+      replyRepr: reply.replace(/\n/g, '\\n')
+    })
   } catch (e) {
     clearTimeout(timeout)
     res.status(200).json({ error: e.name === 'AbortError' ? 'timeout' : e.message })
