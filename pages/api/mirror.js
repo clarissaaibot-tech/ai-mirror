@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Input is required' })
   }
 
-  const MINIMAX_API_KEY = 'sk-cp-JJC5FS3nibA5HxIB5AhzdKoFF2moC0LauZJMc4lMaHMvnXuB8491ugASoXDzFmAPF2uoExcWFmukTIy4A673z9PuK9mCtnQg6DMm5Mywm_8vOLM2v5by80E'
+  const MINIMAX_API_KEY = 'sk-api-LLbeCHoL3z5I_2u5-Sul3jQtpa6JDC5UxIRON5QuBV-wAQ9HVsfJkNLvmvGWBOVOWmP9DvEJ16W4PrgJI5b3ePJLlqC2K-VLTs25SH_tVmAIc_tUxmwzMwE'
 
   const systemPrompt = `You are a mirror. You do not give answers — you reflect back what the person is carrying.
 
