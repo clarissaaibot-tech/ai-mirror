@@ -1,41 +1,31 @@
 export default async function handler(req, res) {
-  const key = process.env.MINIMAX_API_KEY || 'NOT SET'
+  const KEY = process.env.MINIMAX_API_KEY || 'not-set'
   
-  const results = {}
-  
-  // Test 1: Standard endpoint
   try {
-    const r1 = await fetch('https://api.minimax.chat/v1/text/chatcompletion_pro', {
+    const response = await fetch('https://api.minimax.io/anthropic/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-      body: JSON.stringify({ model: 'abab6.5s-chat', tokens_to_generate: 20, messages: [{ role: 'user', content: 'hi' }] })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${KEY}`
+      },
+      body: JSON.stringify({
+        model: 'MiniMax-M2.7',
+        messages: [{ role: 'user', content: 'Say hello in JSON format {"greeting":"..."}' }],
+        max_tokens: 1500,
+        temperature: 0.8
+      })
     })
-    results.test1 = { status: r1.status, body: await r1.text() }
-  } catch (e) { results.test1 = { error: e.message } }
-  
-  // Test 2: OpenAI compat endpoint  
-  try {
-    const r2 = await fetch('https://api.minimax.chat/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-      body: JSON.stringify({ model: 'abab6.5-chat', messages: [{ role: 'user', content: 'hi' }], max_tokens: 20 })
+    
+    const data = await response.json()
+    const textBlock = data.content?.find(c => c.type === 'text')
+    
+    res.status(200).json({
+      status: response.status,
+      ok: response.ok,
+      keyPrefix: KEY.substring(0, 15) + '...',
+      textBlock: textBlock?.text?.substring(0, 100) || 'MISSING'
     })
-    results.test2 = { status: r2.status, body: await r2.text() }
-  } catch (e) { results.test2 = { error: e.message } }
-  
-  // Test 3: With group_id
-  try {
-    const r3 = await fetch('https://api.minimax.chat/v1/text/chatcompletion_pro?group_id=default', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-      body: JSON.stringify({ model: 'abab6.5s-chat', tokens_to_generate: 20, messages: [{ role: 'user', content: 'hi' }] })
-    })
-    results.test3 = { status: r3.status, body: await r3.text() }
-  } catch (e) { results.test3 = { error: e.message } }
-  
-  // Test 4: Check env key prefix
-  results.keyPrefix = key.substring(0, 10) + '...'
-  results.keyLength = key.length
-  
-  res.status(200).json(results)
+  } catch (e) {
+    res.status(500).json({ error: e.message, stack: e.stack })
+  }
 }
