@@ -11,6 +11,7 @@ export default function Home() {
   const [mirrorQuestion, setMirrorQuestion] = useState('')
   const [mirrorNote, setMirrorNote] = useState('')
   const [closure, setClosure] = useState('')
+  const [closureLabel, setClosureLabel] = useState('')
   const [loading, setLoading] = useState(false)
   const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 })
   const [mounted, setMounted] = useState(false)
@@ -197,6 +198,7 @@ export default function Home() {
       setMirrorQuestion(data.question)
       setMirrorNote(data.note)
       setClosure(data.closure || '')
+      setClosureLabel(data.closureLabel || '')
       setStep('mirror')
     } catch (err) {
       console.error(err)
@@ -241,6 +243,7 @@ export default function Home() {
     setMirrorQuestion('')
     setMirrorNote('')
     setClosure('')
+    setClosureLabel('')
     setRound(1)
     setHistory([])
     conversationRef.current = []
@@ -257,6 +260,7 @@ export default function Home() {
     setMirrorQuestion('')
     setMirrorNote('')
     setClosure('')
+    setClosureLabel('')
     setRound(1)
     setHistory([])
     conversationRef.current = []
@@ -688,10 +692,18 @@ export default function Home() {
                 <p style={{
                   fontSize: 15, color: 'rgba(158, 224, 224, 0.55)',
                   lineHeight: 1.95, fontFamily: "'Cormorant Garamond', serif",
-                  whiteSpace: 'pre-wrap',
+                  whiteSpace: 'pre-wrap', marginBottom: 16,
                 }}>
                   {closure}
                 </p>
+                {closureLabel && (
+                  <p style={{
+                    fontSize: 12, color: 'rgba(158, 224, 224, 0.3)',
+                    letterSpacing: 1, fontStyle: 'italic',
+                  }}>
+                    {closureLabel}
+                  </p>
+                )}
               </div>
             )}
 
