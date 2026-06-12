@@ -396,8 +396,8 @@ export default function Home() {
       <main style={{
         position: 'relative', zIndex: 10, flex: 1,
         display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'flex-start',
-        minHeight: '85vh', padding: '0 24px 80px', textAlign: 'center',
+        alignItems: 'center', justifyContent: 'center',
+        minHeight: '100vh', padding: '0 24px', textAlign: 'center',
       }}>
 
         {/* LANDING */}
@@ -494,7 +494,18 @@ export default function Home() {
 
         {/* MIRROR (showing question + note, user answers) */}
         {step === 'mirror' && (
-          <div style={{ animation: 'fadeIn 0.8s ease forwards', width: '100%', maxWidth: 600 }}>
+          <div style={{
+            width: '100%', maxWidth: 600,
+            display: 'flex', flexDirection: 'column',
+            maxHeight: '90vh',
+          }}>
+            {/* Scrollable conversation area */}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              paddingBottom: 24,
+              animation: 'fadeIn 0.8s ease forwards',
+            }}>
 
             {/* Conversation history */}
             {conversationRef.current.map((entry, i) => (
@@ -550,8 +561,6 @@ export default function Home() {
               }} />
             )}
 
-            
-
             {/* Prompt label */}
             {round === 1 && (
               <p style={{
@@ -568,6 +577,14 @@ export default function Home() {
                 Your answer
               </p>
             )}
+            </div>
+
+            {/* Sticky input area */}
+            <div style={{
+              borderTop: conversationRef.current.length > 0 ? '1px solid rgba(158, 224, 224, 0.1)' : 'none',
+              paddingTop: 20,
+              background: '#0a0a0a',
+            }}>
 
             {/* Input for current round */}
             <div style={{
@@ -634,6 +651,7 @@ export default function Home() {
             >
               Look again
             </button>
+            </div>
           </div>
         )}
 
