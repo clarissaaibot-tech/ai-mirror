@@ -13,7 +13,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'MiniMax-M2.7',
-        messages: [{ role: 'user', content: 'Mirror: 用户说「我很害怕」。用JSON回复 {"question":"?","note":"?"} 只返回JSON，不要其他文字。' }],
+        messages: [{ role: 'user', content: '用户说「我很害怕」。用JSON回复 {"question":"?","note":"?"} 只返回JSON。' }],
         max_tokens: 200,
         temperature: 0.8
       }),
@@ -25,14 +25,11 @@ export default async function handler(req, res) {
     
     const textBlock = data.content?.find(c => c.type === 'text')
     const reply = textBlock?.text?.trim() || ''
-    const m = reply.match(/\{[\s\S]+\}/)
     
     res.status(200).json({ 
       ok: true, 
-      replyLen: reply.length,
-      reply: reply.substring(0, 200),
-      parsed: m ? JSON.parse(m[0]) : null,
-      usage: data.usage
+      reply: reply,
+      contentBlocks: data.content?.map(c => ({type: c.type, textLen: c.text?.length}))
     })
   } catch (e) {
     clearTimeout(timeout)
