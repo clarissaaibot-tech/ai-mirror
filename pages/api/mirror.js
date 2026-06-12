@@ -321,20 +321,21 @@ export default async function handler(req, res) {
   const userMessage = buildUserMessage(input, round, history)
 
   try {
-    const response = await fetch('https://api.minimax.chat/v1/text/chatcompletion_pro', {
+    // Use MiniMax-M2.7 model via OpenAI-compatible endpoint
+    const response = await fetch('https://api.minimax.chat/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${MINIMAX_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'abab6.5s-chat',
-        tokens_to_generate: 512,
-        temperature: 0.8,
+        model: 'MiniMax-M2.7',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage }
-        ]
+        ],
+        max_tokens: 512,
+        temperature: 0.8
       })
     })
 
@@ -347,19 +348,15 @@ export default async function handler(req, res) {
     const data = await response.json()
     console.log('MiniMax response:', JSON.stringify(data))
 
-    // Parse response — try multiple field paths
+    // Parse response — OpenAI-compatible format
     let reply = ''
     
-    if (data.choices?.[0]?.messages?.[0]?.text) {
-      reply = data.choices[0].messages[0].text.trim()
-    } else if (data.choices?.[0]?.messages?.[0]?.content) {
-      reply = data.choices[0].messages[0].content.trim()
-    } else if (data.choices?.[0]?.message?.content) {
+    if (data.choices?.[0]?.message?.content) {
       reply = data.choices[0].message.content.trim()
-    } else if (data.choices?.[0]?.text) {
-      reply = data.choices[0].text.trim()
     } else if (data.choices?.[0]?.delta?.content) {
       reply = data.choices[0].delta.content.trim()
+    } else if (data.choices?.[0]?.text) {
+      reply = data.choices[0].text.trim()
     } else if (data.base_resp?.error_msg) {
       throw new Error(data.base_resp.error_msg)
     } else {
