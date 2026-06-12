@@ -348,20 +348,23 @@ export default async function handler(req, res) {
     console.log('MiniMax response:', JSON.stringify(data))
 
     // Parse response — Anthropic-compatible format
+    // MiniMax returns content[] with multiple block types (thinking, text)
+    // We need the TEXT block specifically, not the thinking block
     let reply = ''
     
-    if (data.content?.[0]?.text) {
-      reply = data.content[0].text.trim()
-    } else if (data.content?.[0]?.type === 'text') {
-      reply = data.content[0].text.trim()
-    } else if (data.content) {
-      // Find first text block
+    if (data.content && Array.isArray(data.content)) {
+      // Find the FIRST text block (type === 'text'), skip thinking blocks
       const textBlock = data.content.find(c => c.type === 'text')
-      reply = textBlock?.text?.trim() || ''
+      if (textBlock?.text) {
+        reply = textBlock.text.trim()
+      } else if (data.content[0]?.text && data.content[0]?.type === 'text') {
+        // Explicitly check first block is text type
+        reply = data.content[0].text.trim()
+      }
     }
     
     if (!reply) {
-      console.error('Could not parse MiniMax response:', JSON.stringify(data))
+      console.error('Could not parse MiniMax response — no text block found:', JSON.stringify(data))
       throw new Error('Could not parse response')
     }
 
