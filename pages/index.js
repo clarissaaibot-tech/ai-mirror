@@ -583,7 +583,7 @@ export default function Home() {
             <div style={{
               borderTop: conversationRef.current.length > 0 ? '1px solid rgba(158, 224, 224, 0.1)' : 'none',
               paddingTop: 20,
-              background: '#0a0a0a',
+              paddingBottom: 24,
             }}>
 
             {/* Input for current round */}
