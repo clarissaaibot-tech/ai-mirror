@@ -176,6 +176,7 @@ export default function Home() {
   // Submit to mirror API
   const submitToMirror = async (userInput, currentRound, currentHistory) => {
     setLoading(true)
+    setInput('') // clear input immediately
     try {
       const res = await fetch('/api/mirror', {
         method: 'POST',
@@ -200,6 +201,9 @@ export default function Home() {
       setClosure(data.closure || '')
       setClosureLabel(data.closureLabel || '')
       setStep('mirror')
+
+      // Scroll to bottom after render
+      setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100)
     } catch (err) {
       console.error(err)
     }
@@ -285,7 +289,7 @@ export default function Home() {
             color: #9ee0e0;
             font-family: 'Inter', -apple-system, sans-serif;
             min-height: 100vh;
-            overflow: hidden;
+            overflow-y: auto;
             cursor: none;
             user-select: none;
             -webkit-user-select: none;
@@ -392,8 +396,8 @@ export default function Home() {
       <main style={{
         position: 'relative', zIndex: 10, flex: 1,
         display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        minHeight: '85vh', padding: '0 24px', textAlign: 'center',
+        alignItems: 'center', justifyContent: 'flex-start',
+        minHeight: '85vh', padding: '0 24px 80px', textAlign: 'center',
       }}>
 
         {/* LANDING */}
