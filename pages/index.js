@@ -267,8 +267,7 @@ export default function Home() {
     setStep('landing')
   }
 
-  // Round labels
-  const roundLabel = round === 1 ? 'Round one' : round === 2 ? 'Round two' : 'Round three'
+  // Round labels — removed per user request
 
   return (
     <>
@@ -291,7 +290,8 @@ export default function Home() {
             user-select: none;
             -webkit-user-select: none;
           }
-          ::selection { background: transparent; }
+          ::placeholder { background: transparent; color: rgba(158, 224, 224, 0.45); }
+          textarea::placeholder { color: rgba(158, 224, 224, 0.45); }
           textarea { user-select: text; -webkit-user-select: text; cursor: text !important; }
           button { cursor: none !important; }
           a { cursor: none !important; }
@@ -440,12 +440,7 @@ export default function Home() {
         {/* QUESTION (first input) */}
         {step === 'question' && (
           <div style={{ animation: 'fadeIn 0.8s ease forwards', width: '100%', maxWidth: 560 }}>
-            <p style={{
-              fontSize: 12, letterSpacing: 3, textTransform: 'uppercase',
-              color: 'rgba(158, 224, 224, 0.4)', marginBottom: 24,
-            }}>
-              Round one
-            </p>
+            
             <h2 style={{
               fontSize: 28, fontWeight: 400, marginBottom: 14,
               color: 'rgba(158, 224, 224, 0.8)',
@@ -551,13 +546,7 @@ export default function Home() {
               }} />
             )}
 
-            {/* Current round indicator */}
-            <p style={{
-              fontSize: 11, letterSpacing: 3, textTransform: 'uppercase',
-              color: 'rgba(158, 224, 224, 0.3)', marginBottom: 20,
-            }}>
-              {roundLabel}
-            </p>
+            
 
             {/* Prompt label */}
             {round === 1 && (

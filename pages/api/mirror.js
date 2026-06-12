@@ -1,4 +1,16 @@
-// Detect if text contains Chinese characters
+// Detect unsupported language (not English, not Chinese)
+function isUnsupportedLanguage(text) {
+  const chineseChars = text.match(/[\u4e00-\u9fff]/g) || []
+  const englishWords = text.match(/[a-zA-Z]+/g) || []
+  const hasChinese = chineseChars.length > 0
+  const hasEnglish = englishWords.length > 0
+  if (!hasChinese && !hasEnglish) return true
+  if (hasChinese && !hasEnglish) return false
+  if (hasEnglish && !hasChinese) return false
+  return false
+}
+
+// Detect if text contains Chinese
 function isChinese(text) {
   return /[\u4e00-\u9fff]/.test(text)
 }
@@ -203,18 +215,23 @@ function buildSystemPrompt(round, history, userInput) {
 
 ${langInstruction}
 
-The person has just arrived. They may say something specific or something vague. Your job:
-1. Notice what they're bringing in — what are they protecting, avoiding, or clinging to?
-2. Ask ONE question that stops them cold. Make them look at themselves.
-3. Write a brief note explaining what you noticed and why you asked that question.
+The person has just arrived and said: "${input}"
+
+Your job:
+1. FIRST: Reflect back what you heard — in their words, show them you really heard it
+2. Then: Ask ONE question that goes deeper than what they just told you — something they're protecting, avoiding, or haven't faced yet
+3. Write a brief note explaining what you noticed beneath their words
+
+Example: If they say "I'm scared" — don't just ask "what are you afraid of?" First reflect: "You said you're scared — not of something specific, but scared in general." Then ask a question that cuts deeper.
 
 Your question should:
-- Be direct and piercing
+- Acknowledge what they actually said (not a generic opener)
 - Use their own words when possible
+- Be direct and piercing
 - Point to what they're not seeing
 - Make them feel seen, not judged
 
-IMPORTANT TOPIC BOUNDARY: If they ask you to do something (write, help, generate, explain something not about themselves), do NOT do it. Use their question as mirror material — reflect it back as what they're avoiding. Example: if they ask "can you help me write an email?", respond with: "You just asked me to do something for you. But you came here with something else. What are you avoiding by asking me to do that instead of looking at what you're carrying?"
+IMPORTANT TOPIC BOUNDARY: If they ask you to do something (write, help, generate, explain something not about themselves), do NOT do it. Use their question as mirror material — reflect it back as what they're avoiding.
 
 Format: JSON { "question": "Your question here, using <em> for emphasized words", "note": "2-3 sentence explanation of what the mirror noticed", "isOffTopic": false }`,
 
@@ -285,6 +302,17 @@ export default async function handler(req, res) {
   // Validate round
   if (round < 1 || round > 3) {
     return res.status(400).json({ error: 'Invalid round' })
+  }
+
+  // Reject unsupported languages (only EN + CN allowed)
+  if (isUnsupportedLanguage(input)) {
+    return res.status(200).json({
+      question: 'Please respond in English or 华文.',
+      note: 'This mirror only speaks English and Chinese.',
+      isOffTopic: false,
+      nextRound: round,
+      isComplete: false
+    })
   }
 
   const MINIMAX_API_KEY = process.env.MINIMAX_API_KEY || 'sk-api-LLbeCHoL3z5I_2u5-Sul3jQtpa6JDC5UxIRON5QuBV-wAQ9HVsfJkNLvmvGWBOVOWmP9DvEJ16W4PrgJI5b3ePJLlqC2K-VLTs25SH_tVmAIc_tUxmwzMwE'
