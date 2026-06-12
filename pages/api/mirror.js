@@ -333,7 +333,7 @@ export default async function handler(req, res) {
         messages: [
           { role: 'user', content: systemPrompt + '\n\nUser: ' + userMessage }
         ],
-        max_tokens: 512,
+        max_tokens: 1500,
         temperature: 0.8
       })
     })
